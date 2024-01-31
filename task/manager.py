@@ -44,7 +44,6 @@ def list_of_contents():
         ordered_list = files_without_dot + files_with_dot
         for content in ordered_list:
             print(content)
-            return
     # If ls command includes -l or -lh print the size of files
     elif len(user_dir) == 2 and (user_dir[1] == '-l' or user_dir[1] == '-lh'):
         with os.scandir(os.getcwd()) as entries:
@@ -53,10 +52,8 @@ def list_of_contents():
                 entry_size = entry.stat().st_size
                 if len(user_dir) == 2 and user_dir[1] == '-l':
                     print(entry.name + " " + str(entry_size))
-                    return
                 elif len(user_dir) == 2 and user_dir[1] == '-lh':
                     print(entry.name + " " + str(human_readable_size(entry_size)))
-                    return
     else:
         print("Invalid command")
 
@@ -112,27 +109,79 @@ def change_dir_name(user_command):
     input_list = user_command.split()
 
     if len(input_list) < 3:
-        print("Specify the current name of the file or directory and the new name")
+        print("Specify the current name of the file or directory and the new location and/or name")
     else:
-        old_name = input_list[1]
-        new_name = input_list[2]
-        current_directory = os.getcwd()
-        old_path = os.path.join(current_directory, old_name)
-        new_path = os.path.join(current_directory, new_name)
+        source = os.path.normpath(str(input_list[1]))
+        destination = os.path.normpath(str(input_list[2]))
 
-        if not os.path.exists(old_path):
+        if not os.path.exists(source):
             print("No such file or directory")
-        elif os.path.exists(new_path):
+        elif os.path.exists(destination) and os.path.isdir(destination):
+            destination_path = os.path.join(destination, os.path.basename(source))
+
+            if os.path.exists(destination_path):
+                print("The file or directory already exists")
+            else:
+                shutil.move(source, destination_path)
+                print(f"{os.path.basename(source)} has been moved to {destination}")
+        elif os.path.exists(destination) and os.path.isfile(destination):
             print("The file or directory already exists")
         else:
-            shutil.move(old_path, new_path)
-            print(f"{old_name} has been renamed to {new_name}")
+            shutil.move(source, destination)
+            print(f"{os.path.basename(source)} has been moved to {destination} line 151")
+
 
 def print_updates():
     # Printing current directory
     print('The current dir is ', os.getcwd())
     # Printing directory contents
     print('The current dir contents ', os.listdir(os.getcwd()))
+
+
+def is_extension(extension):
+    if extension[0] == '.' and extension[1] != '/':
+        return True
+    else:
+        return False
+
+
+def copy_files(user_command):
+    input_list = user_command.split(' ')
+    if len(input_list) >= 2 and is_extension(input_list[1]):
+        print("Reached the extension check block")
+    elif len(input_list) <= 2:
+        print("Specify the file")
+    elif len(input_list) > 3:
+        print("Specify the current name of the file or directory and the new location and/or name")
+    else:
+
+        try:
+            input_list.pop(0)  # removing cp command
+            copy_directory = input_list.pop(-1)  # removing copy dir from end of list
+
+            if len(input_list) > 1:
+                path = " ".join(input_list)
+                path_split = path.split('/')
+                file_name = path_split.pop(-1)
+                path = '/'.join(path_split)
+
+            else:
+                path = os.getcwd()
+                file_name = input_list[0]
+
+            path_with_file = path + '/' + file_name
+            dst_directory = path + '/' + copy_directory
+            file_exists_check = dst_directory + '/' + file_name
+
+            if not os.path.exists(path_with_file) or not os.path.exists(dst_directory):
+                print("No such file or directory")
+            elif os.path.exists(file_exists_check):
+                print(f"{file_name} already exists in this directory")
+            else:
+                shutil.copy2(path_with_file, dst_directory)
+
+        except IndexError:
+            print("Invalid")
 
 
 print("Input the command")
@@ -157,7 +206,7 @@ while user_input != 'quit':
     elif 'mv' in user_input_list[0]:
         change_dir_name(user_input)
     elif 'cp' in user_input_list[0]:
-        change_dir_name(user_input)
+        copy_files(user_input)
     else:
         print("Invalid Command")
     user_input = input()
