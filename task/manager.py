@@ -72,8 +72,21 @@ def human_readable_size(size):
 
 def remove_dir(user_command):
     input_list = user_command.split()
+
     if len(input_list) <= 1:
         print("Specify the file or directory")
+    elif len(input_list) == 2 and is_extension(input_list[1]):
+        extension = input_list[1]
+        current_directory = os.getcwd()
+        files_to_remove = [file for file in os.listdir(current_directory) if file.endswith(extension)]
+
+        if not files_to_remove:
+            print(f"File extension {extension} not found in this directory.")
+        else:
+            for file in files_to_remove:
+                file_path = os.path.join(current_directory, file)
+                os.remove(file_path)
+                # print(f"Deleted: {file}")
     elif len(input_list) == 2:
         # command list
         print(f"The command list is {input_list}")
@@ -110,6 +123,36 @@ def change_dir_name(user_command):
 
     if len(input_list) < 3:
         print("Specify the current name of the file or directory and the new location and/or name")
+    elif len(input_list) >= 2 and is_extension(input_list[1]):
+        # print("Reached the extension check block")
+        extension = input_list[1]
+        # print("The extension is ", extension)
+        destination = input_list[2]
+        # print("The destination is ", destination)
+        current_directory = os.getcwd()
+        # print("The current directory is ", current_directory)
+        source_files = [file for file in os.listdir(current_directory) if file.endswith(extension)]
+        # print("The source files are ", source_files)
+
+        if not source_files:
+            print(f"File extension {extension} not found in this directory.")
+        else:
+            for file in source_files:
+                source_path = os.path.join(current_directory, file)
+                # print("The source file is ", source_path)
+                destination_path = os.path.join(destination, file)
+                # print("The destination is ", destination_path)
+
+                if os.path.exists(destination_path):
+                    user_response = input(f"{file} already exists in this directory. Replace? (y/n): ").lower()
+                    if user_response == 'y':
+                        shutil.move(source_path, destination_path)
+                        print(f"Moved: {file} to {destination}")
+                    elif user_response != 'n':
+                        print("Invalid input. Please enter 'y' or 'n'.")
+                else:
+                    shutil.move(source_path, destination)
+                    print(f"Moved: {file} to {destination}")
     else:
         source = os.path.normpath(str(input_list[1]))
         destination = os.path.normpath(str(input_list[2]))
@@ -128,7 +171,7 @@ def change_dir_name(user_command):
             print("The file or directory already exists")
         else:
             shutil.move(source, destination)
-            print(f"{os.path.basename(source)} has been moved to {destination} line 151")
+            print(f"{os.path.basename(source)} has been moved to {destination} line 161")
 
 
 def print_updates():
@@ -148,7 +191,28 @@ def is_extension(extension):
 def copy_files(user_command):
     input_list = user_command.split(' ')
     if len(input_list) >= 2 and is_extension(input_list[1]):
-        print("Reached the extension check block")
+        current_directory = os.getcwd()
+        extension = input_list[1]
+        destination = input_list[2]
+        source_files = [file for file in os.listdir(current_directory) if file.endswith(extension)]
+
+        if not source_files:
+            print(f"File extension {extension} not found in this directory.")
+        else:
+            for file in source_files:
+                source_path = os.path.join(current_directory, file)
+                destination_path = os.path.join(destination, file)
+
+                if os.path.exists(destination_path):
+                    user_response = input(f"{file} already exists in this directory. Replace? (y/n): ").lower()
+                    if user_response == 'y':
+                        shutil.copy(source_path, destination_path)
+                        print(f"Replaced: {file}")
+                    elif user_response != 'n':
+                        print("Invalid input. Please enter 'y' or 'n'.")
+                else:
+                    shutil.copy(source_path, destination)
+                    print(f"Copied: {file} to {destination}")
     elif len(input_list) <= 2:
         print("Specify the file")
     elif len(input_list) > 3:
@@ -169,8 +233,8 @@ def copy_files(user_command):
                 path = os.getcwd()
                 file_name = input_list[0]
 
-            path_with_file = path + '/' + file_name
-            dst_directory = path + '/' + copy_directory
+            path_with_file = os.path.join(path, file_name)
+            dst_directory = os.path.join(path, copy_directory)
             file_exists_check = dst_directory + '/' + file_name
 
             if not os.path.exists(path_with_file) or not os.path.exists(dst_directory):
